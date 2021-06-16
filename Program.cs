@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,10 +22,10 @@ namespace SuppliesPriceLister
             // Create service provider
             ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
 
-
+             
             // entry to run app
             var maintask = serviceProvider.GetService<App>();
-            await maintask.RunAsync();
+            await maintask.RunAsync(Assembly.GetExecutingAssembly().GetManifestResourceNames());
         }
 
         private static void ConfigureServices(ServiceCollection serviceCollection)

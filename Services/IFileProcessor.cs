@@ -5,6 +5,6 @@ namespace SuppliesPriceLister.Services
     public interface IFileProcessor
     {
         string FileType { get; }
-        Task ProcessFile(string path);
+        Task ProcessFile(string embeddedpath);
     }
 }

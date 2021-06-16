@@ -22,7 +22,7 @@ namespace SuppliesPriceLister
             // Create service provider
             ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
 
-             
+
             // entry to run app
             var maintask = serviceProvider.GetService<App>();
             await maintask.RunAsync(Assembly.GetExecutingAssembly().GetManifestResourceNames());
@@ -38,7 +38,7 @@ namespace SuppliesPriceLister
                 .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
-            
+
             var template =
                 "{Timestamp:yyyy:MM:dd HH:mm:ss.fff} [{Level:4}] [{Step}] {Message}{NewLine}{Exception}";
 
@@ -47,8 +47,7 @@ namespace SuppliesPriceLister
                 .MinimumLevel.Override("System", LogEventLevel.Information)
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .Enrich.FromLogContext()
-                .WriteTo.Console(outputTemplate: template)
-                .WriteTo.File("log-{Date}.log")
+                .WriteTo.File("log-{Date}.log", outputTemplate: template)
                 .ReadFrom.Configuration(configuration)
                 .Enrich.WithProperty("ApplicationName", ApplicationConstants.AppName).CreateLogger();
             serviceCollection.Configure<ApplicationSettings>(configuration.GetSection(nameof(ApplicationSettings)));

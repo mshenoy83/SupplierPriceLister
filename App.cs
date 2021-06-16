@@ -1,25 +1,31 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Serilog;
+using SuppliesPriceLister.Models;
 using SuppliesPriceLister.Services;
 
 namespace SuppliesPriceLister
 {
     public class App
     {
+        private readonly ConcurrentBag<IEnumerable<PrintModel>> _printModels;
         private readonly ILogger<App> _logger;
         private readonly IFileProcessorStrategyService _fileProcessorStrategy;
+        private readonly IDataPrinterService _printerService;
 
-        public App(ILogger<App> logger, IFileProcessorStrategyService fileProcessorStrategy)
+        public App(ILogger<App> logger, IFileProcessorStrategyService fileProcessorStrategy, IDataPrinterService printerService)
         {
             _logger = logger;
             _fileProcessorStrategy = fileProcessorStrategy;
+            _printModels = new ConcurrentBag<IEnumerable<PrintModel>>();
+            _printerService = printerService;
         }
 
-        public async Task RunAsync(string[] fileNames)
+        public void Run(string[] fileNames)
         {
             _logger.LogInformation("Begin processing files.");
 
@@ -30,18 +36,34 @@ namespace SuppliesPriceLister
             }
 
 
-            foreach (var file in fileNames)
+            Parallel.ForEach(fileNames,file =>
             {
                 var extension = Path.GetExtension(file);
                 var fileprocessor = _fileProcessorStrategy.GetFileProcessor(extension);
                 if (fileprocessor == null)
                 {
                     _logger.LogWarning("No file processor found for extensiontype : {extension}", extension);
-                    continue;
+                    return;
                 }
+                
+                _printModels.Add(fileprocessor.ProcessFile(file));
+            });
 
-                await fileprocessor.ProcessFile(file);
+            IEnumerable<PrintModel> finalList = null;
+            foreach (var printArray in _printModels)
+            {
+                if (finalList == null)
+                {
+                    finalList = printArray;
+                }
+                else
+                {
+                    finalList.Concat(printArray);
+                }
             }
+            
+            _printerService.PrintData(finalList);
+            
             _logger.LogInformation("File processing complete.");
         }
     }

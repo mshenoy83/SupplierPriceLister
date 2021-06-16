@@ -1,18 +1,18 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 using SuppliesPriceLister.Models;
+using SuppliesPriceLister.Services;
 
 namespace SuppliesPriceLister
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
             // Your solution begins here
             // Create service collection
@@ -25,7 +25,7 @@ namespace SuppliesPriceLister
 
             // entry to run app
             var maintask = serviceProvider.GetService<App>();
-            await maintask.RunAsync(Assembly.GetExecutingAssembly().GetManifestResourceNames());
+            maintask.Run(Assembly.GetExecutingAssembly().GetManifestResourceNames());
         }
 
         private static void ConfigureServices(ServiceCollection serviceCollection)
@@ -54,7 +54,11 @@ namespace SuppliesPriceLister
 
             // Add access to generic IConfiguration
             serviceCollection.AddSingleton(configuration);
-
+            serviceCollection.AddTransient<IFileProcessor, CSVFileProcessor>();
+            serviceCollection.AddTransient<IFileProcessor, JsonFileProcessor>();
+            serviceCollection.AddTransient<IDataPrinterService, DataPrinterService>();
+            serviceCollection.AddTransient<IFileProcessorStrategyService, FileProcessorStrategyService>();
+            serviceCollection.AddTransient<ICurrencyConverter, CurrencyConverter>();
 
             // Add logging
             serviceCollection.AddLogging(logging => logging.AddSerilog(dispose: true));

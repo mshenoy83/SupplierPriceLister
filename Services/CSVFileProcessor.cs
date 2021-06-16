@@ -1,55 +1,55 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using CsvHelper;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using SuppliesPriceLister.Models;
+using ILogger = Serilog.ILogger;
 
 namespace SuppliesPriceLister.Services
 {
-    public class JsonFileProcessor : IFileProcessor
+    public class CSVFileProcessor : IFileProcessor
     {
+        private readonly ILogger<CSVFileProcessor> _logger;
         private readonly ICurrencyConverter _currencyConverter;
-        private readonly ILogger<JsonFileProcessor> _logger;
 
-        public JsonFileProcessor(ILogger<JsonFileProcessor> logger, ICurrencyConverter currencyConverter)
+        public CSVFileProcessor(ILogger<CSVFileProcessor> logger, ICurrencyConverter currencyConverter)
         {
             _logger = logger;
             _currencyConverter = currencyConverter;
         }
 
-
-        public string FileType => ApplicationConstants.JsonExtension;
-
+        public string FileType => ApplicationConstants.CsvExtension;
         public IEnumerable<PrintModel> ProcessFile(string embeddedpath)
         {
             try
             {
                 using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(embeddedpath);
                 using var reader = new StreamReader(stream);
-                var serializer = new JsonSerializer();
-                var jsonModel = (JsonModel) serializer.Deserialize(reader, typeof(JsonModel));
+                using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+                var records = csv.GetRecords<CSVModel>();
 
-                if (jsonModel != null && jsonModel.Partners.Any())
+                if (records != null)
                 {
-                    return jsonModel.Partners.SelectMany(x => x.Supplies).Select(x => new PrintModel
+                    return records.Select(x => new PrintModel
                     {
-                        Identifier = x.Id.ToString(),
+                        Identifier = x.Identifier,
                         Description = x.Description,
-                        Price = _currencyConverter.ConvertAudToUsd(x.PriceInCents)
+                        Price = _currencyConverter.ConvertAudToUsd(x.CostAud)
                     });
                 }
-
-                _logger.LogWarning("Empty Json file embedded");
+                _logger.LogWarning("Empty CSV file Embedded");
                 return null;
             }
             catch (Exception e)
             {
-                _logger.LogError(e,"JsonFileProcessor has thrown an error");
+                _logger.LogError(e,"CSVFileProcessor has thrown an error");
                 return null;
             }
+            
         }
     }
 }

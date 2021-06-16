@@ -6,6 +6,6 @@ namespace SuppliesPriceLister.Services
     public interface IFileProcessor
     {
         string FileType { get; }
-        IEnumerable<PrintModel> ProcessFile(string embeddedpath);
+        List<PrintModel> ProcessFile(string embeddedpath);
     }
 }

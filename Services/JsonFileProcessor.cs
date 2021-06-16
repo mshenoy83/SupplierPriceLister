@@ -23,7 +23,7 @@ namespace SuppliesPriceLister.Services
 
         public string FileType => ApplicationConstants.JsonExtension;
 
-        public IEnumerable<PrintModel> ProcessFile(string embeddedpath)
+        public List<PrintModel> ProcessFile(string embeddedpath)
         {
             try
             {
@@ -39,7 +39,7 @@ namespace SuppliesPriceLister.Services
                         Identifier = x.Id.ToString(),
                         Description = x.Description,
                         Price = _currencyConverter.ConvertAudToUsd(x.PriceInCents)
-                    });
+                    }).ToList();
                 }
 
                 _logger.LogWarning("Empty Json file embedded");

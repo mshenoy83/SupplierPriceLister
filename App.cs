@@ -12,7 +12,7 @@ namespace SuppliesPriceLister
 {
     public class App
     {
-        private readonly ConcurrentBag<IEnumerable<PrintModel>> _printModels;
+        private readonly ConcurrentBag<List<PrintModel>> _printModels;
         private readonly ILogger<App> _logger;
         private readonly IFileProcessorStrategyService _fileProcessorStrategy;
         private readonly IDataPrinterService _printerService;
@@ -21,7 +21,7 @@ namespace SuppliesPriceLister
         {
             _logger = logger;
             _fileProcessorStrategy = fileProcessorStrategy;
-            _printModels = new ConcurrentBag<IEnumerable<PrintModel>>();
+            _printModels = new ConcurrentBag<List<PrintModel>>();
             _printerService = printerService;
         }
 
@@ -49,17 +49,10 @@ namespace SuppliesPriceLister
                 _printModels.Add(fileprocessor.ProcessFile(file));
             });
 
-            IEnumerable<PrintModel> finalList = null;
+            var finalList = new List<PrintModel>();
             foreach (var printArray in _printModels)
             {
-                if (finalList == null)
-                {
-                    finalList = printArray;
-                }
-                else
-                {
-                    finalList.Concat(printArray);
-                }
+                finalList.AddRange(printArray.ToList());
             }
             
             _printerService.PrintData(finalList);

@@ -23,13 +23,14 @@ namespace SuppliesPriceLister.Services
         }
 
         public string FileType => ApplicationConstants.CsvExtension;
-        public IEnumerable<PrintModel> ProcessFile(string embeddedpath)
+        public List<PrintModel> ProcessFile(string embeddedpath)
         {
             try
             {
                 using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(embeddedpath);
                 using var reader = new StreamReader(stream);
                 using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+                csv.Context.RegisterClassMap<CsvModelMapper>();
                 var records = csv.GetRecords<CSVModel>();
 
                 if (records != null)
@@ -39,7 +40,7 @@ namespace SuppliesPriceLister.Services
                         Identifier = x.Identifier,
                         Description = x.Description,
                         Price = _currencyConverter.ConvertAudToUsd(x.CostAud)
-                    });
+                    }).ToList();
                 }
                 _logger.LogWarning("Empty CSV file Embedded");
                 return null;
